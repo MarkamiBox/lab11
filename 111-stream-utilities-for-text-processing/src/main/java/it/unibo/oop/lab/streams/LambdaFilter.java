@@ -51,19 +51,20 @@ public final class LambdaFilter extends JFrame {
         // 3)
         NUMLINE("Count the number of lines", s -> String.valueOf(s.lines().count())),
         // 4)
-        LISTWORD("List all the words in alphabetical order", 
-        s -> Arrays.stream(s.split("\\s+"))
-            .sorted()
-            .collect(Collectors.joining("\n"))
+        LISTWORD(
+            "List all the words in alphabetical order", 
+            s -> Arrays.stream(s.split("\\s+"))
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .collect(Collectors.joining("\n"))
         ),
         // 5)
-        WORDCOUNT("Write the count for each word",
-        s -> Arrays.stream(s.split("\\s+"))
-            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-            .entrySet()
-            .stream()
-            .map(entry -> entry.getKey() + " -> " + entry.getValue())
-            .collect(Collectors.joining("\n"))
+        WORDCOUNT(
+            "Write the count for each word",
+            s -> Arrays.stream(s.split("\\s+"))
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet().stream()
+                .map(entry -> entry.getKey() + " -> " + entry.getValue())
+                .collect(Collectors.joining("\n"))
         );
 
         private final String commandName;
