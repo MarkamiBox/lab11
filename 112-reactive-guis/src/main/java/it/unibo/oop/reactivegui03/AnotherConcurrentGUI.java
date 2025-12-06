@@ -1,7 +1,6 @@
 package it.unibo.oop.reactivegui03;
 
 import it.unibo.oop.JFrameUtil;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,8 +20,12 @@ public final class AnotherConcurrentGUI extends JFrame {
 
     @Serial
     private static final long serialVersionUID = 1L;
+    private static final long TIME = 10_000;
     private static final Logger LOGGER = LoggerFactory.getLogger(AnotherConcurrentGUI.class);
     private final JLabel display = new JLabel();
+    private final JButton up = new JButton("up");
+    private final JButton down = new JButton("down");
+    private final JButton stop = new JButton("stop");
 
     /**
      * Builds a new CGUI.
@@ -32,9 +35,6 @@ public final class AnotherConcurrentGUI extends JFrame {
         JFrameUtil.dimensionJFrame(this);
         final JPanel panel = new JPanel();
         panel.add(display);
-        final JButton up = new JButton("up");
-        final JButton down = new JButton("down");
-        final JButton stop = new JButton("stop");
         panel.add(up);
         panel.add(down);
         panel.add(stop);
@@ -53,6 +53,24 @@ public final class AnotherConcurrentGUI extends JFrame {
         up.addActionListener(e -> agent.setEnabled(true));
         down.addActionListener(e -> agent.setEnabled(false));
         stop.addActionListener(e -> agent.stopCounting());
+
+        /*
+         * New agent to handle the timer.
+         */
+        new Thread(() -> {
+            try {
+                Thread.sleep(TIME);
+            } catch (final InterruptedException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+            // Execute GUI updates on the Event Dispatch Thread
+            SwingUtilities.invokeLater(() -> {
+                agent.stopCounting();
+                up.setEnabled(false);
+                down.setEnabled(false);
+                stop.setEnabled(false);
+            });
+        }).start();
     }
 
     /*
@@ -73,11 +91,9 @@ public final class AnotherConcurrentGUI extends JFrame {
         private volatile boolean stop;
         private volatile boolean countDown = true;
         private int counter;
-        private static final int TIME = 10_000;
 
         @Override
         public void run() {
-            final var startTime = System.currentTimeMillis();
             while (!this.stop) {
                 try {
                     final var nextText = Integer.toString(this.counter);
@@ -86,10 +102,6 @@ public final class AnotherConcurrentGUI extends JFrame {
                         this.counter++;
                     } else {
                         this.counter--;
-                    }
-                    // disable buttons after 10 seconds
-                    if (System.currentTimeMillis() - startTime >= TIME) {
-                        this.stopCounting();
                     }
                     Thread.sleep(100);
                 } catch (InvocationTargetException | InterruptedException ex) {
